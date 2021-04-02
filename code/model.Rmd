@@ -1,0 +1,74 @@
+---
+title: "Term Project - Predictive Modeling"
+output:
+  pdf_document: default
+  md_document:
+    variant: gfm
+  html_document:
+    df_print: paged
+---
+Loding important packages 
+```{r}
+library(readr)
+library(RColorBrewer) #Rcolorbrewer palette
+library(corrplot)
+library(ggcorrplot)
+library(plotly)
+```
+
+Importing Dataset
+```{r}
+data <- read.csv("~/Breast-Cancer-Prediction/data/data.csv")
+```
+
+Looking at dataset
+```{r}
+head(data)
+```
+
+Columns in dataset
+```{r}
+colnames(data)
+```
+
+Checking for null values
+```{r}
+lapply(data,function(x) { length(which(is.na(x)))})
+```
+
+Deleting X column as it seems to be a mistake while importing the dataset 
+```{r}
+#Also we don't need id for any type of analysis
+drops <- c("id","X")
+data <- data[ , !(names(data) %in% drops)]
+```
+
+```{r}
+lapply(data,function(x) { length(which(is.na(x)))})
+```
+
+
+\
+As we can notice now we do not have any missing data
+\
+
+\
+Let's looking into correlation matrix to see correlation  between all the variables
+\
+```{r}
+matrixData <- cor(data[sapply(data,is.numeric)])
+
+# Rcolorbrewer palette
+coul <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
+heatmap(matrixData, scale="column", col = coul)
+
+```
+
+```{r}
+corrplot(matrixData, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+```
+```{r}
+pairs.panels(B[,])
+```
+
+
