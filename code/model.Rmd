@@ -1,11 +1,11 @@
 ---
 title: "Term Project - Predictive Modeling"
 output:
+  html_document:
+    df_print: paged
   md_document:
     variant: gfm
   pdf_document: default
-  html_document:
-    df_print: paged
 ---
 Loding important packages 
 ```{r}
