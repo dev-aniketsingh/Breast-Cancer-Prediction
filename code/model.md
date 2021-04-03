@@ -1,42 +1,86 @@
 Loding important packages
 
 ``` r
-library(readr)
-library(RColorBrewer) #Rcolorbrewer palette
-library(corrplot)
+library(readr,  warn.conflicts=F)
+library(RColorBrewer,  warn.conflicts=F) #Rcolorbrewer palette
+library(corrplot,  warn.conflicts=F)
 ```
 
     ## corrplot 0.84 loaded
 
 ``` r
-library(ggcorrplot)
+library(ggcorrplot,  warn.conflicts=F)
 ```
 
     ## Loading required package: ggplot2
 
 ``` r
-library(plotly)
+library(plotly,  warn.conflicts=F)
+library(ggplot2, warn.conflicts=F)
+library(reshape, warn.conflicts=F)
+library(viridis, warn.conflicts=F)
+```
+
+    ## Loading required package: viridisLite
+
+``` r
+library(tidyverse, warn.conflicts=F)
+```
+
+    ## ── Attaching packages ─────────────────────────────────────── tidyverse 1.3.0 ──
+
+    ## ✓ tibble  3.1.0     ✓ dplyr   1.0.4
+    ## ✓ tidyr   1.1.2     ✓ stringr 1.4.0
+    ## ✓ purrr   0.3.4     ✓ forcats 0.5.0
+
+    ## ── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+    ## x tidyr::expand() masks reshape::expand()
+    ## x dplyr::filter() masks plotly::filter(), stats::filter()
+    ## x dplyr::lag()    masks stats::lag()
+    ## x dplyr::rename() masks reshape::rename(), plotly::rename()
+
+``` r
+library(hrbrthemes, warn.conflicts=F)
+```
+
+    ## NOTE: Either Arial Narrow or Roboto Condensed fonts are required to use these themes.
+
+    ##       Please use hrbrthemes::import_roboto_condensed() to install Roboto Condensed and
+
+    ##       if Arial Narrow is not on your system, please see https://bit.ly/arialnarrow
+
+``` r
+library(psych, warn.conflicts=F)
+library(class, warn.conflicts=F)
+library(caret, warn.conflicts = F)
+```
+
+    ## Loading required package: lattice
+
+``` r
+library(DescTools)
 ```
 
     ## 
-    ## Attaching package: 'plotly'
+    ## Attaching package: 'DescTools'
 
-    ## The following object is masked from 'package:ggplot2':
+    ## The following objects are masked from 'package:caret':
     ## 
-    ##     last_plot
+    ##     MAE, RMSE
 
-    ## The following object is masked from 'package:stats':
+    ## The following objects are masked from 'package:psych':
     ## 
-    ##     filter
+    ##     AUC, ICC, SD
 
-    ## The following object is masked from 'package:graphics':
-    ## 
-    ##     layout
+``` r
+library(sjPlot)
+set.seed(123456789)
+```
 
 Importing Dataset
 
 ``` r
-data <- read.csv("~/Breast-Cancer-Prediction/data/data.csv")
+data <- read.csv("~/Breast-Cancer-Prediction/data/data.csv",  header=T)
 ```
 
 Looking at dataset
@@ -224,12 +268,14 @@ lapply(data,function(x) { length(which(is.na(x)))})
     ## $X
     ## [1] 569
 
-Deleting X column as it seems to be a mistake while importing the
-dataset
+We can notice, that there seems to be three category in dataset.
+They’re: mean, se and worst
+
+DATA WRANGLING Deleting X column as it seems to be a mistake while
+importing the dataset
 
 ``` r
-#Also we don't need id for any type of analysis
-drops <- c("id","X")
+drops <- c("X")
 data <- data[ , !(names(data) %in% drops)]
 ```
 
@@ -237,6 +283,9 @@ data <- data[ , !(names(data) %in% drops)]
 lapply(data,function(x) { length(which(is.na(x)))})
 ```
 
+    ## $id
+    ## [1] 0
+    ## 
     ## $diagnosis
     ## [1] 0
     ## 
@@ -338,8 +387,7 @@ Let’s looking into correlation matrix to see correlation between all the
 variables  
 
 ``` r
-matrixData <- cor(data[sapply(data,is.numeric)])
-
+matrixData <- cor(data[sapply(data,is.numeric)], method="pearson")
 # Rcolorbrewer palette
 coul <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
 heatmap(matrixData, scale="column", col = coul)
@@ -354,5 +402,109 @@ corrplot(matrixData, tl.col = "black", order = "hclust", hclust.method = "averag
 ![](model_files/figure-gfm/unnamed-chunk-9-1.png)<!-- -->
 
 ``` r
-###
+#data <- sapply(data,is.numeric)
+data.mean <- cor(data[,c(3:12)],method="pearson")
+data.se <- cor(data[,c(13:22)],method="pearson")
+data.worst <- cor(data[,c(23:32)],method="pearson")
+
+
+corrplot(data.mean, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
 ```
+
+![](model_files/figure-gfm/unnamed-chunk-10-1.png)<!-- -->
+
+``` r
+corrplot(data.se, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+```
+
+![](model_files/figure-gfm/unnamed-chunk-10-2.png)<!-- -->
+
+``` r
+corrplot(data.worst, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+```
+
+![](model_files/figure-gfm/unnamed-chunk-10-3.png)<!-- -->
+
+  
+
+``` r
+table(data$diagnosis)
+```
+
+    ## 
+    ##   B   M 
+    ## 357 212
+
+``` r
+prop.table(table(data$diagnosis))*100
+```
+
+    ## 
+    ##        B        M 
+    ## 62.74165 37.25835
+
+``` r
+ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) + 
+  geom_bar( ) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position="none")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-12-1.png)<!-- -->
+
+``` r
+pairs.panels(data[,c(3:12)], main="Cancer Mean")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-13-1.png)<!-- -->
+
+``` r
+pairs.panels(data[,c(13:22)], main="Cancer SE")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-13-2.png)<!-- -->
+
+``` r
+pairs.panels(data[,c(23:32)], main="Cancer Worst")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-13-3.png)<!-- -->
+
+``` r
+ggplot(data, aes(x = diagnosis,
+y = radius_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 2) +
+labs(title = "Radius Mean distribution by diagnosis")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-14-1.png)<!-- -->
+
+``` r
+ggplot(data, aes(x = diagnosis,
+y = radius_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 2) +
+labs(title = "Radius Se distribution by diagnosis")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-15-1.png)<!-- -->
+
+``` r
+ggplot(data, aes(x = diagnosis,
+y = radius_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Radius Wprst distribution by diagnosis")
+```
+
+![](model_files/figure-gfm/unnamed-chunk-16-1.png)<!-- -->  
+Let’s split the data now to see how tumors differ for M and B  
+
+``` r
+dataNew <- split(data, data$diagnosis)
+dataB <- dataNew$B
+dataM <- dataNew$M
+```
+
+  
+Now we have two different datasets for B and M  
+\#\#\#\#(I will do this work later, I can’t find perfect visualization
+technique for this)
