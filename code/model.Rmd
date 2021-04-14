@@ -1,11 +1,11 @@
 ---
 title: "Term Project - Predictive Modeling"
 output:
-  html_document:
-    df_print: paged
+  pdf_document: default
   md_document:
     variant: gfm
-  pdf_document: default
+  html_document:
+    df_print: paged
 ---
 Loding important packages 
 ```{r}
@@ -31,6 +31,8 @@ set.seed(123456789)
 Importing Dataset
 ```{r}
 data <- read.csv("~/Breast-Cancer-Prediction/data/data.csv",  header=T)
+cancerData <- read.csv("~/Breast-Cancer-Prediction/data/data.csv",  header=T)
+
 ```
 
 Looking at dataset
@@ -152,3 +154,74 @@ Now we have two different datasets for B and M
 \
 ####(I will do this work later, I can't find perfect visualization technique for this)
 
+
+Model Building 
+
+```{r}
+str(cancerData)
+cancerData <- select(cancerData, -id, -X)
+cancerData$diagnosis<- as.numeric(as.factor(cancerData$diagnosis))
+ 
+library(kernlab)
+ind <- sample(1:dim(cancerData)[1],170)
+train <- cancerData[-ind, ]
+test <- cancerData[ind, ]
+```
+
+
+```{r}
+library(e1071)
+
+svmfit = svm(diagnosis~ ., data = train, kernel = "linear", cost = 5, scale = FALSE)
+tune.out <- tune(svm, diagnosis~., data = train, kernel = "linear",
+                 ranges = list(cost = c(0.001, 0.01, 0.1, 1, 5, 10, 100)))
+# extract the best model
+(bestmod <- tune.out$best.model)
+```
+
+```{r}
+prediction <- predict(bestmod,test)
+prediction_train <- predict(bestmod,train)
+
+```
+
+```{r}
+library(Metrics)
+cor(test$diagnosis,prediction)*100
+cmBest = table(test[,1], prediction)
+#cm
+cm2Best = table(train[,1], prediction_train )
+#cm2
+
+```
+
+
+```{r}
+classifier = svm(formula = diagnosis ~ .,
+                 data = train,
+                 type = 'C-classification',
+                 kernel = 'linear')
+
+y_pred = predict(classifier, test)
+y_train_pred = predict(classifier, train)
+
+```
+
+```{r}
+cmBEST = table(test[,1], y_pred)
+cmBEST
+cm2BEST = table(train[,1], y_train_pred )
+cm2BEST
+
+#cor(test$diagnosis,y_pred)*100
+
+```
+#7 inccorect in train and 2 incorrect in test
+
+```{r}
+library(caret) 
+confusionMatrix(cmBEST)
+confusionMatrix(cm2BEST)
+
+```
+Model accuracy of 98% obtained on test set and also 98% on train set.
