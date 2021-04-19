@@ -1,0 +1,242 @@
+---
+title: "Predictive  project"
+author: "Anup Chhetri"
+date: "4/19/2021"
+output: html_document
+---
+---
+title: "Term Project - Predictive Modeling"
+output:
+  pdf_document: default
+  md_document:
+    variant: gfm
+  html_document:
+    df_print: paged
+---
+Loding important packages 
+```{r}
+library(readr,  warn.conflicts=F)
+library(RColorBrewer,  warn.conflicts=F) #Rcolorbrewer palette
+library(corrplot,  warn.conflicts=F)
+library(ggcorrplot,  warn.conflicts=F)
+library(plotly,  warn.conflicts=F)
+library(ggplot2, warn.conflicts=F)
+library(reshape, warn.conflicts=F)
+library(viridis, warn.conflicts=F)
+library(tidyverse, warn.conflicts=F)
+library(hrbrthemes, warn.conflicts=F)
+library(psych, warn.conflicts=F)
+library(class, warn.conflicts=F)
+library(caret, warn.conflicts = F)
+library(DescTools)
+library(sjPlot)
+library(kernlab)
+library(caret)
+library(Matrix)
+set.seed(123456789)
+```
+
+
+Importing Dataset
+```{r import}
+data <- read_csv("~/Downloads/data.csv")
+data
+
+```
+
+Looking at dataset
+```{r head}
+head(data)
+```
+
+Columns in dataset
+```{r column}
+colnames(data)
+```
+
+Checking for null values
+```{r skim}
+##lapply(data,function(x) { length(which(is.na(x)))})
+skimr::skim(data) ##Among 2 character variables, no missing values found for diagnosis variable, found 569 missing values found for X33 character variable and  found 31 numeric variable
+```
+
+We can notice, that there seems to be three category in dataset. They're: 
+mean, se and worst
+
+DATA WRANGLING 
+Deleting X column as it seems to be a mistake while importing the dataset 
+```{r drop empty column}
+drops <- c("X33")
+data <- data[ , !(names(data) %in% drops)]
+data
+```
+
+
+\
+Finally, we got rid of all the missing values, so the modified data is ready to use for further analysis. 
+\
+
+\
+Let's looking into correlation matrix to see correlation  between all the variables
+\
+```{r matrix}
+matrixData <- cor(data[sapply(data,is.numeric)], method="pearson")
+# Rcolorbrewer palette
+coul <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
+heatmap(matrixData, scale="column", col = coul)
+
+```
+
+```{r corrplot}
+corrplot(matrixData, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+```
+
+```{r group}
+#data <- sapply(data,is.numeric)
+data.mean <- cor(data[,c(3:12)],method="pearson")
+data.se <- cor(data[,c(13:22)],method="pearson")
+data.worst <- cor(data[,c(23:32)],method="pearson")
+
+
+corrplot(data.mean, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+
+
+
+corrplot(data.se, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+
+
+
+corrplot(data.worst, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+```
+
+
+\
+```{r relative_freq}
+table(data$diagnosis)
+count(data, diagnosis) %>% mutate(relative_freq = (n/sum(n))) -> relative_freq
+relative_freq
+
+```
+
+```{r b1}
+ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) + 
+  geom_bar() +
+  scale_fill_brewer(palette = "Set1") +
+  theme(legend.position="none") + labs(title= "Barplot representing two different tumors")
+```
+
+
+```{r p1}
+pairs.panels(data[,c(3:12)], main="Cancer Mean")
+```
+
+```{r p2}
+pairs.panels(data[,c(13:22)], main="Cancer SE")
+```
+
+```{r p3}
+pairs.panels(data[,c(23:32)], main="Cancer Worst")
+```
+
+Now we will construct 9 different violin plots for radius, perimeter and area of the spread of tumor in the body of patient based on the mean, se and worst.
+```{r v1}
+##Violin plot representing Radius Mean distribution by diagnosis
+ggplot(data, aes(x = diagnosis,
+y = radius_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 2) +
+labs(title = "Radius Mean distribution by diagnosis")
+```
+
+```{r v2}
+##Violin plot representing Radius_Se distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = radius_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 2) +
+labs(title = "Radius Se distribution by diagnosis")
+```
+
+```{r v3}
+##Violin plot representing Radius worst distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = radius_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Radius Worst distribution by diagnosis")
+```
+
+```{r v4}
+##Violin plot representing area Mean distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = area_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Area Mean distribution by diagnosis")
+```
+
+```{r v5}
+##Violin plot representing area se distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = area_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Area_Se distribution by diagnosis")
+```
+
+```{r v6}
+##Violin plot representing area worst distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = area_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Area Worst distribution by diagnosis")
+```
+
+```{r v7}
+##Violin plot representing perimeter_Se distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = perimeter_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Perimeter_se distribution by diagnosis")
+```
+
+```{r v8}
+##Violin plot representing perimeter Mean distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = perimeter_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "perimeter mean distribution by diagnosis")
+```
+
+
+```{r v9}
+##Violin plot representing perimeter worst distribution by diagnosis
+
+ggplot(data, aes(x = diagnosis,
+y = perimeter_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
+fill = "orange", outlier.color = "orange", outlier.size = 3) +
+labs(title = "Perimeter Worst distribution by diagnosis")
+```
+
+\
+Let's split the data now to see how tumors differ for M and B
+\
+```{r split}
+cancer_split <- split(data, data$diagnosis)
+##cancer_train <- training(cancer_split)
+##cancer_test <- testing(cancer_split)
+dataB <- cancer_split$B
+dataM <- cancer_split$M
+```
+```{r b2}
+ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) + 
+  geom_bar() + labs(title= "Barplot representing two different tumors")
+```
+\
+Now we have two different datasets for B and M
+\
+
+
+
