@@ -1,6 +1,6 @@
 ---
 title: "Predictive  project"
-author: "Anup Chhetri"
+author: "Anup Chhetri  Gabriella Whitfield Aniket Singh Alexandra Ballow"
 date: "4/19/2021"
 output: html_document
 ---
@@ -33,9 +33,30 @@ library(sjPlot)
 library(kernlab)
 library(caret)
 library(Matrix)
+library(kableExtra)
 set.seed(123456789)
 ```
 
+\ The data was created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian and then uploaded to Kaggle by Street in 1995. The data set describes characteristics of the cell nuclei of breast mass. The nuclei are seen through digitalized images from a fine needle aspirate (FNA) of a breast mass. FNA is a type of biopsy performed to gain samples of tissue and fluid from breast lesions using a twenty-one to twenty-five gauge needle. It is one of the ways doctors choose to diagnosis breast cancer without removing the mass first.
+
+```{r description}
+text_tbl <- data.frame(
+Variable = c("Diagnosis", "Radius", "Texture", "Perimeter", "Area", "Smoothness", "Compactness", "Concavity", "Concave Points", "Symmetry", "Fractural Dimension"), 
+Description = c(
+    "M for malignant or B for benign",
+    "The mean of three measured distances from center to perimeter",
+    "The standard deviation of gray-scale values",
+    "The measure of the distance around the boundary of the nuclei",
+    "The measure of the surface of the nuclei",
+    "The variation in radius lengths",
+    "The measure equal to the perimeter squared divided by the area all minus one",
+    "The severity of concave portions on the contour",
+    "The number of concave portions of the contour",
+    "The measure of the likeness across any diameter of the nuclei",
+    "The measure of the “coastline approximation” minus one"
+) )
+kbl(text_tbl, booktabs = T) %>% kable_styling(full_width = F) %>% column_spec(1, bold = T) %>% column_spec(2, width = "30em")
+```
 
 Importing Dataset
 ```{r import}
