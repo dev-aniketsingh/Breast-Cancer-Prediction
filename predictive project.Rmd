@@ -1,6 +1,6 @@
 ---
-title: "Predictive  project"
-author: "Anup Chhetri  Gabriella Whitfield Aniket Singh Alexandra Ballow"
+title: "Predictive  Project"
+author: "Anup Chhetri, Gabriella Whitfield, Aniket Singh, Alexandra Ballow"
 date: "4/19/2021"
 output: html_document
 ---
@@ -13,8 +13,8 @@ output:
   html_document:
     df_print: paged
 ---
-Loding important packages 
-```{r}
+
+```{r set up, message=FALSE, warning=FALSE, include=FALSE}
 library(readr,  warn.conflicts=F)
 library(RColorBrewer,  warn.conflicts=F) #Rcolorbrewer palette
 library(corrplot,  warn.conflicts=F)
@@ -38,8 +38,10 @@ set.seed(123456789)
 ```
 
 \ The data was created by Dr. William H. Wolberg, W. Nick Street, and Olvi L. Mangasarian and then uploaded to Kaggle by Street in 1995. The data set describes characteristics of the cell nuclei of breast mass. The nuclei are seen through digitalized images from a fine needle aspirate (FNA) of a breast mass. FNA is a type of biopsy performed to gain samples of tissue and fluid from breast lesions using a twenty-one to twenty-five gauge needle. It is one of the ways doctors choose to diagnosis breast cancer without removing the mass first.
-
-```{r description}
+\
+\ The data set consists of thirty-two variables with five hundred and sixty-nine observations. Each of the characteristics of the nuclei have variables for their mean, standard error, and the worst values. These variables are listed below and are used as the predictors. An ID number is used for each observation. This represents each person biopsied to ensure no input was used more than once. The diagnosis variable, with input of malignant or benign, shows the final results of the biopsy. 
+\
+```{r description, echo=FALSE, message=FALSE, warning=FALSE}
 text_tbl <- data.frame(
 Variable = c("Diagnosis", "Radius", "Texture", "Perimeter", "Area", "Smoothness", "Compactness", "Concavity", "Concave Points", "Symmetry", "Fractural Dimension"), 
 Description = c(
@@ -55,209 +57,189 @@ Description = c(
     "The measure of the likeness across any diameter of the nuclei",
     "The measure of the “coastline approximation” minus one"
 ) )
-kbl(text_tbl, booktabs = T) %>% kable_styling(full_width = F) %>% column_spec(1, bold = T) %>% column_spec(2, width = "30em")
+kbl(text_tbl, booktabs = T) %>% kable_styling(full_width = F) %>% column_spec(1, bold = T) %>% column_spec(2, width = "35em")
 ```
-
+\
 Importing Dataset
-```{r import}
+```{r import, echo=FALSE, message=FALSE, warning=FALSE}
 data <- read_csv("~/Downloads/data.csv")
-data
-
 ```
-
+\
 Looking at dataset
-```{r head}
+```{r head, echo=FALSE, message=FALSE, warning=FALSE}
+head(data)
+```
+\
+Columns in dataset
+```{r column, echo=FALSE, message=FALSE, warning=FALSE}
+colnames(data)
+```
+\
+Before starting the analysis, it is important to check for null or missing values. Below shows that five hundred and sixty-nine missing values were found for the character variable X33. Also shown is the thirty-one numeric values used in our analysis and two character variables, the identification variable and the response variable.
+```{r skim, echo=FALSE, message=FALSE, warning=FALSE}
+##lapply(data,function(x) { length(which(is.na(x)))})
+skimr::skim(data)
+```
+\
+Three categories appear in the data set. They include the mean, standard deviation, and worst for each base characteristic.
+\
+\
+DATA WRANGLING 
+\
+While checking for missing data, a mistake column was found. Deleting this column, X33, is important so as not to alter the outcomes.
+```{r drop empty column, echo=FALSE, message=FALSE, warning=FALSE}
+drops <- c("X33")
+data <- data[ , !(names(data) %in% drops)]
 head(data)
 ```
 
-Columns in dataset
-```{r column}
-colnames(data)
-```
-
-Checking for null values
-```{r skim}
-##lapply(data,function(x) { length(which(is.na(x)))})
-skimr::skim(data) ##Among 2 character variables, no missing values found for diagnosis variable, found 569 missing values found for X33 character variable and  found 31 numeric variable
-```
-
-We can notice, that there seems to be three category in dataset. They're: 
-mean, se and worst
-
-DATA WRANGLING 
-Deleting X column as it seems to be a mistake while importing the dataset 
-```{r drop empty column}
-drops <- c("X33")
-data <- data[ , !(names(data) %in% drops)]
-data
-```
-
-
 \
-Finally, we got rid of all the missing values, so the modified data is ready to use for further analysis. 
+Once the missing values are removed, the modified data is ready to be use for further analysis. 
 \
-
 \
-Let's looking into correlation matrix to see correlation  between all the variables
+VISUALS
 \
-```{r matrix}
+Let's look into the correlation matrix to see correlation between all the variables.
+\
+```{r matrix, echo=FALSE, message=FALSE, warning=FALSE}
 matrixData <- cor(data[sapply(data,is.numeric)], method="pearson")
 # Rcolorbrewer palette
 coul <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
 heatmap(matrixData, scale="column", col = coul)
-
 ```
 
-```{r corrplot}
+```{r corrplot, echo=FALSE, message=FALSE, warning=FALSE}
 corrplot(matrixData, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
 ```
 
-```{r group}
+```{r group, echo=FALSE, message=FALSE, warning=FALSE}
 #data <- sapply(data,is.numeric)
 data.mean <- cor(data[,c(3:12)],method="pearson")
 data.se <- cor(data[,c(13:22)],method="pearson")
 data.worst <- cor(data[,c(23:32)],method="pearson")
-
-
 corrplot(data.mean, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
-
-
-
 corrplot(data.se, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
-
-
-
 corrplot(data.worst, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
 ```
 
-
 \
-```{r relative_freq}
+```{r relative_freq, echo=FALSE, message=FALSE, warning=FALSE}
 table(data$diagnosis)
 count(data, diagnosis) %>% mutate(relative_freq = (n/sum(n))) -> relative_freq
 relative_freq
-
 ```
 
-```{r b1}
+```{r b1, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) + 
   geom_bar() +
   scale_fill_brewer(palette = "Set1") +
-  theme(legend.position="none") + labs(title= "Barplot representing two different tumors")
+  theme(legend.position="none") + labs(title= "Barplot Representing Two Different Tumors")
 ```
-
-
-```{r p1}
+\
+```{r p1, echo=FALSE, message=FALSE, warning=FALSE}
 pairs.panels(data[,c(3:12)], main="Cancer Mean")
 ```
-
-```{r p2}
-pairs.panels(data[,c(13:22)], main="Cancer SE")
+\
+```{r p2, echo=FALSE, message=FALSE, warning=FALSE}
+pairs.panels(data[,c(13:22)], main="Cancer Standard Error")
 ```
-
-```{r p3}
+\
+```{r p3, echo=FALSE, message=FALSE, warning=FALSE}
 pairs.panels(data[,c(23:32)], main="Cancer Worst")
 ```
 
-Now we will construct 9 different violin plots for radius, perimeter and area of the spread of tumor in the body of patient based on the mean, se and worst.
-```{r v1}
+Now we will construct nine different violin plots for radius, perimeter and area of the spread of tumors in the body of patients based on the mean, standard error, and worst.
+\
+\
+```{r v1, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing Radius Mean distribution by diagnosis
 ggplot(data, aes(x = diagnosis,
 y = radius_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 2) +
-labs(title = "Radius Mean distribution by diagnosis")
+labs(title = "Radius Mean Distribution by Diagnosis")
 ```
-
-```{r v2}
+\
+```{r v2, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing Radius_Se distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = radius_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 2) +
-labs(title = "Radius Se distribution by diagnosis")
+labs(title = "Radius Standard Error Distribution by Diagnosis")
 ```
-
-```{r v3}
+\
+```{r v3, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing Radius worst distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = radius_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "Radius Worst distribution by diagnosis")
+labs(title = "Radius Worst Distribution by Diagnosis")
 ```
-
-```{r v4}
+\
+```{r v4, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing area Mean distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = area_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "Area Mean distribution by diagnosis")
+labs(title = "Area Mean Distribution by Diagnosis")
 ```
-
-```{r v5}
+\
+```{r v5, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing area se distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = area_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "Area_Se distribution by diagnosis")
+labs(title = "Area Standard Error Distribution by Diagnosis")
 ```
-
-```{r v6}
+\
+```{r v6, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing area worst distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = area_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "Area Worst distribution by diagnosis")
+labs(title = "Area Worst Distribution by Diagnosis")
 ```
-
-```{r v7}
+\
+```{r v7, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing perimeter_Se distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = perimeter_se)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "Perimeter_se distribution by diagnosis")
+labs(title = "Perimeter Standard Error Distribution by Diagnosis")
 ```
-
-```{r v8}
+\
+```{r v8, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing perimeter Mean distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = perimeter_mean)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "perimeter mean distribution by diagnosis")
+labs(title = "Perimeter Mean Distribution by Diagnosis")
 ```
-
-
-```{r v9}
+\
+```{r v9, echo=FALSE, message=FALSE, warning=FALSE}
 ##Violin plot representing perimeter worst distribution by diagnosis
-
 ggplot(data, aes(x = diagnosis,
 y = perimeter_worst)) + geom_violin(fill = "cornflowerblue") + geom_boxplot(width = .01,
 fill = "orange", outlier.color = "orange", outlier.size = 3) +
-labs(title = "Perimeter Worst distribution by diagnosis")
+labs(title = "Perimeter Worst Distribution by Diagnosis")
 ```
 
 \
-Let's split the data now to see how tumors differ for M and B
+Let's split the data now to see how tumors differ for M and B.
 \
-```{r split}
+```{r split, echo=FALSE, message=FALSE, warning=FALSE}
 cancer_split <- split(data, data$diagnosis)
 ##cancer_train <- training(cancer_split)
 ##cancer_test <- testing(cancer_split)
 dataB <- cancer_split$B
 dataM <- cancer_split$M
 ```
-```{r b2}
+
+```{r b2, echo=FALSE, message=FALSE, warning=FALSE}
 ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) + 
-  geom_bar() + labs(title= "Barplot representing two different tumors")
+  geom_bar() + labs(title= "Barplot Representing Two Different Tumors")
 ```
 \
-Now we have two different datasets for B and M
+Now we have two different datasets for B and M.
 \
-
 
 
