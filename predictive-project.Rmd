@@ -242,7 +242,17 @@ ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) +
 Now we have two different datasets for B and M.
 \
 ```{r}
+library(reticulate)
 
+Sys.setenv(LD_LIBRARY_PATH = paste0(Sys.getenv("HOME"),"/opt/python-3.8.5/lib"))
+Sys.getenv("LD_LIBRARY_PATH")
+use_virtualenv()
+py_config()
+
+# Currently this must be run in order for R-markdown plotting to work
+matplotlib <- import("matplotlib")
+matplotlib$use("Agg", force = TRUE)
+seaborn <- import("seaborn")
 ```
 ```{r}
 

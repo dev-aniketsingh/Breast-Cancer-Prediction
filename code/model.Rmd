@@ -225,3 +225,19 @@ confusionMatrix(cm2BEST)
 
 ```
 Model accuracy of 98% obtained on test set and also 98% on train set.
+
+
+```{r}
+
+plot(classifier , train, radius_mean~texture_mean )
+
+```
+
+```{r}
+train
+plot(classifier , train, perimeter_mean~area_mean )
+plot(classifier , train, compactness_mean~concavity_mean )
+plot(classifier , train, radius_se~radius_mean )
+
+```
+

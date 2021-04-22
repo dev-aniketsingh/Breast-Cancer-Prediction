@@ -1,0 +1,312 @@
+---
+title: "Breast Cancer Prediction"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+runtime: shiny
+---
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(naniar)
+library(readr,  warn.conflicts=F)
+library(RColorBrewer,  warn.conflicts=F) #Rcolorbrewer palette
+library(corrplot,  warn.conflicts=F)
+library(ggcorrplot,  warn.conflicts=F)
+library(plotly,  warn.conflicts=F)
+library(ggplot2, warn.conflicts=F)
+library(reshape, warn.conflicts=F)
+library(viridis, warn.conflicts=F)
+library(tidyverse, warn.conflicts=F)
+library(hrbrthemes, warn.conflicts=F)
+library(psych, warn.conflicts=F)
+library(class, warn.conflicts=F)
+library(caret, warn.conflicts = F)
+library(DescTools)
+library(sjPlot)
+library(kernlab)
+library(caret)
+library(Matrix)
+library(kableExtra)
+library(plotly)
+library(shiny)
+library(maps)
+library(tidyverse)
+library(skimr)      # skimming data frames
+library(ggthemes)
+library(patchwork)  # combine separate ggplots into the same graphic
+library(GGally)     # ggpairs()
+library(corrplot)
+library(readr,  warn.conflicts=F)
+library(RColorBrewer,  warn.conflicts=F) #Rcolorbrewer palette
+library(corrplot,  warn.conflicts=F)
+library(ggcorrplot,  warn.conflicts=F)
+library(plotly,  warn.conflicts=F)
+library(ggplot2, warn.conflicts=F)
+library(reshape, warn.conflicts=F)
+library(viridis, warn.conflicts=F)
+library(tidyverse, warn.conflicts=F)
+library(hrbrthemes, warn.conflicts=F)
+library(psych, warn.conflicts=F)
+library(class, warn.conflicts=F)
+library(caret, warn.conflicts = F)
+library(DescTools)
+library(sjPlot)
+library(ggplot2)
+library(dplyr)
+library(forcats)
+library(hrbrthemes)
+library(viridis)
+set.seed(123456789)
+knitr::opts_chunk$set(message = FALSE)
+
+data <- read.csv("~/Breast-Cancer-Prediction/data/data.csv",  header=T)
+lapply(data,function(x) { length(which(is.na(x)))})
+drops <- c("X")
+data <- data[ , !(names(data) %in% drops)]
+lapply(data,function(x) { length(which(is.na(x)))})
+palette_ro = c("#ee2f35", "#fa7211", "#fbd600", "#75c731", "#1fb86e", "#0488cf", "#7b44ab")
+df_t_m <- as_tibble(scale(select(data, -diagnosis))) %>%
+  select(ends_with("_mean")) %>%
+  rename_all(~ str_replace_all(., "_mean", "")) %>%
+  rename_all(~ str_replace_all(., "_", "\n")) %>%
+  rename_all(~ str_replace_all(., " ", "\n")) %>%
+  mutate(data["diagnosis"]) %>%
+  pivot_longer(col = -diagnosis, names_to = "features", values_to = "value")
+
+df_t_s <- as_tibble(scale(select(data, -diagnosis))) %>%
+  select(ends_with("_se")) %>%
+  rename_all(~ str_replace_all(., "_se", "")) %>%
+  rename_all(~ str_replace_all(., "_", "\n")) %>%
+  rename_all(~ str_replace_all(., " ", "\n")) %>%
+  mutate(data["diagnosis"]) %>%
+  pivot_longer(col = -diagnosis, names_to = "features", values_to = "value")
+df_t_w <- as_tibble(scale(select(data, -diagnosis))) %>%
+  select(ends_with("_worst")) %>%
+  rename_all(~ str_replace_all(., "_worst", "")) %>%
+  rename_all(~ str_replace_all(., "_", "\n")) %>%
+  rename_all(~ str_replace_all(., " ", "\n")) %>%
+  mutate(data["diagnosis"]) %>%
+  pivot_longer(col = -diagnosis, names_to = "features", values_to = "value")
+```
+
+
+
+```{r}
+#data <- sapply(data,is.numeric)
+data.mean <- cor(data[,c(3:12)],method="pearson")
+data.se <- cor(data[,c(13:22)],method="pearson")
+data.worst <- cor(data[,c(23:32)],method="pearson")
+```
+
+Data {data-orientation=columns}
+=======================================================================
+
+Column {data-width=100, .tabset}
+-----------------------------------------------------------------------
+### Dataset Description
+
+```{r}
+text_tbl <- data.frame(
+Variable = c("Diagnosis", "Radius", "Texture", "Perimeter", "Area", "Smoothness", "Compactness", "Concavity", "Concave Points", "Symmetry", "Fractural Dimension"), 
+Description = c(
+    "M for malignant or B for benign",
+    "The mean of three measured distances from center to perimeter",
+    "The standard deviation of gray-scale values",
+    "The measure of the distance around the boundary of the nuclei",
+    "The measure of the surface of the nuclei",
+    "The variation in radius lengths",
+    "The measure equal to the perimeter squared divided by the area all minus one",
+    "The severity of concave portions on the contour",
+    "The number of concave portions of the contour",
+    "The measure of the likeness across any diameter of the nuclei",
+    "The measure of the “coastline approximation” minus one"
+) )
+kbl(text_tbl, booktabs = T) %>% kable_styling(full_width = F) %>% column_spec(1, bold = T) %>% column_spec(2, width = "35em")
+
+```
+
+### Dataset
+```{r}
+head(data, 50) %>% 
+  DT::datatable()
+```
+
+### Missing Values in Dataset
+```{r}
+gg_miss_var(data) + labs(y = "Look at all the missing ones")
+```
+
+### Two Different Diagnosis Distribution in Dataset
+```{r}
+p2 <- ggplot(data, aes(x=as.factor(diagnosis), color=as.factor(diagnosis))) +
+  geom_density(alpha=0.6) +
+  geom_vline(data=data, aes(xintercept=as.factor(diagnosis), color=as.factor(diagnosis)),
+             linetype="dashed")
+
+renderPlot(
+  p2
+)
+#ggplot(data, aes(x=as.factor(diagnosis), fill=as.factor(diagnosis) )) + 
+#  geom_bar() + labs(title= "Barplot Representing Two Different Diagnosis")
+
+```
+
+
+Correlation Plots {data-orientation=columns}
+=======================================================================
+
+Column {data-width=800, .tabset}
+-----------------------------------------------------------------------
+### Mean Distribution 
+```{r}
+renderPlot(
+corrplot(data.mean, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+)
+```
+
+ 
+Column {data-width=800, .tabset}
+-----------------------------------------------------------------------
+### Standard Error Distribution 
+```{r}
+renderPlot(
+corrplot(data.se, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+)
+```
+
+
+### Worst Distribution 
+```{r}
+renderPlot(
+corrplot(data.worst, tl.col = "black", order = "hclust", hclust.method = "average", addrect = 4, tl.cex = 0.7)
+)
+```
+
+
+Violin Plots {data-orientation=rows}
+=======================================================================
+
+Rows {data-height=500, .tabset}
+-----------------------------------------------------------------------
+### Mean Distribution 
+```{r}
+renderPlot(
+df_t_m %>%
+  ggplot(aes(fill=diagnosis, y=value, x=features)) + 
+    geom_violin(position="dodge",alpha=0.5,width = 1, outlier.colour="transparent", ) +
+    xlab("Features") +
+    ylab("Value") +
+    ylim(-6,6) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text.x = element_text(size = 6)) +
+    labs(title="Mean values distribution")
+)
+```
+
+
+### Standard Error Distribution 
+```{r}
+renderPlot(
+df_t_s %>%
+  ggplot(aes(fill=diagnosis, y=value, x=features)) + 
+    geom_violin(position="dodge",alpha=0.5,width = 1, outlier.colour="transparent", ) +
+    xlab("Features") +
+    ylab("Value") +
+    ylim(-13,13) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text.x = element_text(size = 6)) +
+    labs(title="Standard Error values distribution"))
+```
+
+
+### Worst Distribution 
+
+```{r}
+##Violin plot representing Radius worst distribution by diagnosis
+renderPlot(
+df_t_w %>%
+ggplot(aes(fill=diagnosis, y=value, x=features)) + 
+    geom_violin(position="dodge",alpha=0.5,width = 1, outlier.colour="transparent", ) +
+    xlab("Features") +
+    ylab("Value") +
+    ylim(-7,7) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text.x = element_text(size = 6)) +
+    labs(title="Worst Value distribution")
+)
+```
+ 
+Jitter Plots {data-orientation=rows}
+=======================================================================
+
+Rows {data-height=400, .tabset}
+-----------------------------------------------------------------------
+### Mean Distribution 
+
+```{r}
+renderPlot(
+df_t_m %>%
+ggplot(aes(fill=diagnosis, y=value, x=features)) + 
+    geom_jitter(aes(colour = diagnosis)) +
+    xlab("Features") +
+    ylab("Value") +
+    ylim(-7,7) +
+    scale_colour_manual(values = c(palette_ro[1], palette_ro[6])) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text.x = element_text(size = 6)) +
+    labs(title="Mean Value distribution")
+)
+```
+ 
+-----------------------------------------------------------------------
+### Standard Error Distribution
+```{r}
+renderPlot(
+df_t_s %>%
+ggplot(aes(fill=diagnosis, y=value, x=features)) + 
+    geom_jitter(aes(colour = diagnosis)) +
+    xlab("Features") +
+    ylab("Value") +
+    ylim(-7,7) +
+    scale_colour_manual(values = c(palette_ro[1], palette_ro[6])) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text.x = element_text(size = 6)) +
+    labs(title="Standard Error Value distribution")
+)
+```
+
+-----------------------------------------------------------------------
+### Worst Distribution 
+```{r}
+renderPlot(
+df_t_w %>%
+ggplot(aes(fill=diagnosis, y=value, x=features)) + 
+    geom_jitter(aes(colour = diagnosis)) +
+    xlab("Features") +
+    ylab("Value") +
+    ylim(-7,7) +
+    scale_colour_manual(values = c(palette_ro[1], palette_ro[6])) +
+    theme_minimal(base_size = 12) +
+    theme(axis.text.x = element_text(size = 6)) +
+    labs(title="Worst Value distribution")
+)
+```
+
+
+
+
+Heatmap {data-orientation=columns}
+=======================================================================
+Column {data-width=600}
+-----------------------------------------------------------------------
+### Heatmap
+```{r}
+matrixData <- cor(data[sapply(data,is.numeric)], method="pearson")
+# Rcolorbrewer palette
+coul <- colorRampPalette(brewer.pal(8, "PiYG"))(25)
+heatmap(matrixData, scale="column", col = coul)
+```
+
