@@ -313,17 +313,4 @@ plot(classifier , train, radius_se~radius_mean )
 
 ```
 
-```{r}
-df_t_m %>%
-  ggplot(aes(fill=diagnosis, y=value, x=features)) + 
-    geom_violin(alpha=0.5,width = 0.5 ) +
-    xlab("Features") +
-    ylab("Value") +
-    ylim(-6,6) +
-    theme_minimal(base_size = 12) +
-    theme(axis.text.x = element_text(size = 14)) +
-    labs(title="Mean values distribution")
-
-fig1 <- ggplotly(p1)
-```
 

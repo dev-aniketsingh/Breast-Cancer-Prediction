@@ -382,7 +382,6 @@ Violin Plots {.storyboard}
 ### Mean Distribution 
 ```{r}
 renderPlotly(fig1)
-#fig1
 ```
 
 ***
@@ -514,6 +513,23 @@ A Support Vector Machine (SVM) is a supervised machine learning algorithm that c
 SVMs are based on the idea of finding a hyperplane that best divides a dataset into two classes, as shown in the image below.
  
 Support vectors are the data points nearest to the hyperplane, the points of a data set that, if removed, would alter the position of the dividing hyperplane. Because of this, they can be considered the critical elements of a data set.
+
+
+SVM Plots {.storyboard}
+=======================================================================
+
+### SVM on Cancer Dataset
+
+```{r  out.width = "50%", out.height = "50%",echo=FALSE}
+include_graphics("svm1.png") 
+include_graphics("svm2.png") 
+include_graphics("svm3.png") 
+include_graphics("svm4.png") 
+```
+
+***
+
+Here are some examples of SVM classification plots on our dataset. SVM classified both tumors benign (noncancerous) or malignant (cancerous) based on each our features. 
 
 
 Results {.storyboard}
