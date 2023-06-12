@@ -5,5 +5,3 @@
 ## Precision: 98 %
 
 Web Report: https://aniket-k-singh.shinyapps.io/flexDashBoard/
-### Team Members: Aniket K Singh, Alexandra Ballow, Anup Chettri, Gabriella Whitfield 
-
